@@ -2,13 +2,11 @@ package com.exntu.hystrix.controller;
 
 import com.exntu.hystrix.constant.CommonConstant;
 import com.exntu.hystrix.service.HystrixService;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
-import com.netflix.hystrix.exception.HystrixRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,7 +17,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -28,9 +26,52 @@ import java.util.Random;
 @RestController
 public class TestController {
 
+    @Autowired
+    private DiscoveryClient discoveryClient;
 
     @Autowired
     HystrixService _hystrixService;
+
+
+    @Autowired
+    RestTemplate _restTemplate;
+
+
+
+    @RequestMapping("/service-instances/{applicationName}")
+    public List<ServiceInstance> serviceInstancesByApplicationName(
+            @PathVariable String applicationName) {
+        return this.discoveryClient.getInstances(applicationName);
+    }
+
+    @RequestMapping("/ribbon/backend-service")
+    public String testRibbon1(){
+
+        String targetURL = "http://backend-service/";
+        return this._restTemplate.getForObject(targetURL , String.class);
+    }
+
+    @RequestMapping("/ribbon/hystrix-client")
+    public String testRibbon2(){
+        //local - 아님
+        String targetURL = "http://hystrix-client/hystrix-client";
+        return this._restTemplate.getForObject(targetURL , String.class);
+    }
+
+    @RequestMapping("/ribbon/product")
+    public String testRibbon3(){
+        //local
+        String targetURL = "http://product/products";
+        return this._restTemplate.getForObject(targetURL , String.class);
+    }
+
+
+    @RequestMapping(path = "{productId}", method = RequestMethod.GET)
+    public String getProductInfo(@PathVariable String productId){
+
+        return "[product id = " + productId +"]";
+
+    }
 
 
     @GetMapping("/api")
@@ -40,13 +81,19 @@ public class TestController {
 
         //랜덤으로 target 설정
         Random random = new Random();
-        String targetURL = CommonConstant.internal_targetList[random.nextInt(CommonConstant.internal_targetList.length)];
+        String targetURL = "";
 
+        //1. target 정보를 가지고 있음.
+        //targetURL = CommonConstant.internal_targetList[random.nextInt(CommonConstant.internal_targetList.length)];
 
-        //통신
+        //2. target을 유레카 서버에서 가져옴.
+        List<ServiceInstance> serviceInstances = this.discoveryClient.getInstances("backend-service");
+        int randomIndex = random.nextInt(serviceInstances.size());
+        targetURL = serviceInstances.get(randomIndex).getUri().toString();
+
         try {
 
-            URL url = new URL("http://"+ targetURL);
+            URL url = new URL(targetURL);
 
             HttpURLConnection connection = (HttpURLConnection) url
                     .openConnection();
@@ -60,16 +107,16 @@ public class TestController {
             String readLine = null;
 
             while ((readLine = br.readLine()) != null) {
-//                System.out.println("NONE-Hystrix : " + targetURL + " : " + readLine);
+                System.out.println("NONE-Hystrix : " + targetURL + " : " + readLine);
             }
             br.close();
 
         } catch (MalformedURLException e) {
-//            System.out.println("NONE-Hystrix : " + targetURL + " : (MalformedURLException)");
+            System.out.println("NONE-Hystrix : " + targetURL + " : (MalformedURLException)");
             throw e;
 
         } catch (IOException e) {
-//            System.out.println("NONE-Hystrix : " + targetURL + " : (IOException)");
+            System.out.println("NONE-Hystrix : " + targetURL + " : (IOException)");
             throw e;
         }
 
@@ -83,37 +130,51 @@ public class TestController {
             HttpServletRequest request,
             HttpServletResponse response ) throws Exception {
 
-        String [] targetList = CommonConstant.internal_targetList;
         Random random = new Random();
+        String targetURL = "";
 
+        //1. target 정보를 가지고 있음.
+        targetURL = CommonConstant.internal_targetList[random.nextInt(CommonConstant.internal_targetList.length)];
 
-        int idx =  random.nextInt(targetList.length);
+        //2. target 을 유레카 서버에서 가져옴.
+        List<ServiceInstance> serviceInstances = this.discoveryClient.getInstances("backend-service");
+        int randomIndex = random.nextInt(serviceInstances.size());
+        targetURL = serviceInstances.get(randomIndex).getUri().toString();
 
-        switch (idx){
+        switch (randomIndex){
             case 0:
-                return _hystrixService.hystrixCall1(targetList[idx]);
+                return _hystrixService.hystrixCall1(targetURL);
             case 1:
-                return _hystrixService.hystrixCall2(targetList[idx]);
+                return _hystrixService.hystrixCall2(targetURL);
             case 2:
-                return _hystrixService.hystrixCall3(targetList[idx]);
+                return _hystrixService.hystrixCall3(targetURL);
             case 3:
-                return _hystrixService.hystrixCall4(targetList[idx]);
+                return _hystrixService.hystrixCall4(targetURL);
             case 4:
-                return _hystrixService.hystrixCall5(targetList[idx]);
+                return _hystrixService.hystrixCall5(targetURL);
             case 5:
-                return _hystrixService.hystrixCall6(targetList[idx]);
+                return _hystrixService.hystrixCall6(targetURL);
             case 6:
-                return _hystrixService.hystrixCall7(targetList[idx]);
+                return _hystrixService.hystrixCall7(targetURL);
             case 7:
-                return _hystrixService.hystrixCall8(targetList[idx]);
+                return _hystrixService.hystrixCall8(targetURL);
             case 8:
-                return _hystrixService.hystrixCall9(targetList[idx]);
+                return _hystrixService.hystrixCall9(targetURL);
             case 9:
-                return _hystrixService.hystrixCall10(targetList[idx]);
+                return _hystrixService.hystrixCall10(targetURL);
             default:
                 return  "fail";
         }
 
+    }
+
+
+    @GetMapping("/api/hystrix/ribbon")
+    public Object testHystrixRibbonApi(
+            HttpServletRequest request,
+            HttpServletResponse response ) throws Exception {
+
+        return _hystrixService.hystrixRibbon();
     }
 
 

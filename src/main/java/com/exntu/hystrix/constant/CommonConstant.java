@@ -6,6 +6,10 @@ package com.exntu.hystrix.constant;
 public class CommonConstant {
 
 
+    public static final String backend_application_name = "backend-service";
+
+
+
     public static final String[] internal_targetList = {
             "172.27.0.121:8511"
             ,"172.27.0.121:8512"
