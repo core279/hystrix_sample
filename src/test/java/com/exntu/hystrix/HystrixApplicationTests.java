@@ -24,37 +24,5 @@ public class HystrixApplicationTests {
 	}
 
 
-	@Test
-	public void histrixTest() throws Exception{
-
-		String [] targetList = CommonConstant.internal_targetList;
-		Random random = new Random();
-		int idx =  random.nextInt(targetList.length);
-
-		switch (idx){
-			case 0:
-				 _hystrixService.hystrixCall1(targetList[idx]);
-			case 1:
-				 _hystrixService.hystrixCall2(targetList[idx]);
-			case 2:
-				 _hystrixService.hystrixCall3(targetList[idx]);
-			case 3:
-				 _hystrixService.hystrixCall4(targetList[idx]);
-			case 4:
-				 _hystrixService.hystrixCall5(targetList[idx]);
-			case 5:
-				 _hystrixService.hystrixCall6(targetList[idx]);
-			case 6:
-				 _hystrixService.hystrixCall7(targetList[idx]);
-			case 7:
-				 _hystrixService.hystrixCall8(targetList[idx]);
-			case 8:
-				 _hystrixService.hystrixCall9(targetList[idx]);
-			case 9:
-				 _hystrixService.hystrixCall10(targetList[idx]);
-			default:
-		}
-
-	}
 
 }

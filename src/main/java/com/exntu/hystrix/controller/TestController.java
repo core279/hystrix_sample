@@ -1,6 +1,5 @@
 package com.exntu.hystrix.controller;
 
-import com.exntu.hystrix.constant.CommonConstant;
 import com.exntu.hystrix.service.HystrixService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
@@ -38,6 +37,10 @@ public class TestController {
 
 
 
+
+    //////////////////////////////////////////////////////////////
+    //////  Test
+    //////////////////////////////////////////////////////////////
     @RequestMapping("/service-instances/{applicationName}")
     public List<ServiceInstance> serviceInstancesByApplicationName(
             @PathVariable String applicationName) {
@@ -74,6 +77,11 @@ public class TestController {
     }
 
 
+
+
+    //////////////////////////////////////////////////////////////
+    //////  baseline_slow_cooker
+    //////////////////////////////////////////////////////////////
     @GetMapping("/api")
     public Object testApi(
             HttpServletRequest request,
@@ -107,16 +115,16 @@ public class TestController {
             String readLine = null;
 
             while ((readLine = br.readLine()) != null) {
-                System.out.println("NONE-Hystrix : " + targetURL + " : " + readLine);
+                //System.out.println("NONE-Hystrix : " + targetURL + " : " + readLine);
             }
             br.close();
 
         } catch (MalformedURLException e) {
-            System.out.println("NONE-Hystrix : " + targetURL + " : (MalformedURLException)");
+            //System.out.println("NONE-Hystrix : " + targetURL + " : (MalformedURLException)");
             throw e;
 
         } catch (IOException e) {
-            System.out.println("NONE-Hystrix : " + targetURL + " : (IOException)");
+            //System.out.println("NONE-Hystrix : " + targetURL + " : (IOException)");
             throw e;
         }
 
@@ -125,6 +133,9 @@ public class TestController {
     }
 
 
+    //////////////////////////////////////////////////////////////
+    //////  hystrix_slow_cooker
+    //////////////////////////////////////////////////////////////
     @GetMapping("/api/hystrix")
     public Object testHystrixApi(
             HttpServletRequest request,
@@ -134,47 +145,28 @@ public class TestController {
         String targetURL = "";
 
         //1. target 정보를 가지고 있음.
-        targetURL = CommonConstant.internal_targetList[random.nextInt(CommonConstant.internal_targetList.length)];
+        //targetURL = CommonConstant.internal_targetList[random.nextInt(CommonConstant.internal_targetList.length)];
 
         //2. target 을 유레카 서버에서 가져옴.
         List<ServiceInstance> serviceInstances = this.discoveryClient.getInstances("backend-service");
         int randomIndex = random.nextInt(serviceInstances.size());
         targetURL = serviceInstances.get(randomIndex).getUri().toString();
 
-        switch (randomIndex){
-            case 0:
-                return _hystrixService.hystrixCall1(targetURL);
-            case 1:
-                return _hystrixService.hystrixCall2(targetURL);
-            case 2:
-                return _hystrixService.hystrixCall3(targetURL);
-            case 3:
-                return _hystrixService.hystrixCall4(targetURL);
-            case 4:
-                return _hystrixService.hystrixCall5(targetURL);
-            case 5:
-                return _hystrixService.hystrixCall6(targetURL);
-            case 6:
-                return _hystrixService.hystrixCall7(targetURL);
-            case 7:
-                return _hystrixService.hystrixCall8(targetURL);
-            case 8:
-                return _hystrixService.hystrixCall9(targetURL);
-            case 9:
-                return _hystrixService.hystrixCall10(targetURL);
-            default:
-                return  "fail";
-        }
+        return _hystrixService.hystrixCall(targetURL);
 
     }
 
 
+    //////////////////////////////////////////////////////////////
+    //////  hystrix_slow_cooker (ribbon)
+    //////////////////////////////////////////////////////////////
     @GetMapping("/api/hystrix/ribbon")
     public Object testHystrixRibbonApi(
             HttpServletRequest request,
             HttpServletResponse response ) throws Exception {
 
         return _hystrixService.hystrixRibbon();
+
     }
 
 
